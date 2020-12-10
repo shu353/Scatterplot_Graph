@@ -12,6 +12,7 @@ const height = 600;
 const padding = 40;
 
 const svg = d3.select("svg");
+let tooltip = d3.select("#tooltip");
 
 const drawCanvas = () => {
   svg.attr("width", width).attr("height", height);
@@ -21,8 +22,8 @@ const generateScales = () => {
   xScale = d3
     .scaleLinear()
     .domain([
-      d3.min(dataset, (d) => d["Year"]),
-      d3.max(dataset, (d) => d["Year"]),
+      d3.min(dataset, (d) => d["Year"]) - 1,
+      d3.max(dataset, (d) => d["Year"]) + 1,
     ])
     .range([padding, width - padding]);
 
@@ -45,7 +46,38 @@ const drawPoint = () => {
     .attr("r", 5)
     .attr("data-xvalue", (d) => d["Year"])
     .attr("data-yvalue", (d) => new Date(d["Seconds"] * 1000))
-    .attr("cx", (d) => xScale(d["Year"]));
+    .attr("cx", (d) => xScale(d["Year"]))
+    .attr("cy", (d) => yScale(new Date(d["Seconds"] * 1000)))
+    .attr("fill", (d) => (d["Doping"] != "" ? "orange" : "red"))
+    .on("mouseover", (item) => {
+      tooltip.transition().style("visibility", "visible");
+
+      if (item["Doping"] != "") {
+        tooltip.text(
+          item["Year"] +
+            " - " +
+            item["Name"] +
+            " - " +
+            item["Time"] +
+            " - " +
+            item["Doping"]
+        );
+      } else {
+        tooltip.text(
+          item["Year"] +
+            " - " +
+            item["Name"] +
+            " - " +
+            item["Time"] +
+            " - " +
+            "No Allegations"
+        );
+      }
+      tooltip.attr("data-year", item["Year"]);
+    })
+    .on("mouseout", (d) => {
+      tooltip.transition().style("visibility", "hidden");
+    });
 };
 
 const generateAxes = () => {
